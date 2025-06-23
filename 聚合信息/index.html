@@ -234,11 +234,60 @@
                 
 
 <article class="page-content">
-  <p>请问请问请问请问请问请问请问</p>
-
-
-  
-
+  <h1>日期信息</h1>
+  <p>当前日期：<span id="current-date"></span></p>
+  <p>星期：<span id="weekday"></span></p>
+  <p>当前时间：<span id="current-time"></span></p>
+  <p>农历：<span id="lunar-date"></span></p>
+  <script>
+    async function updateDateTimeAndLunar() {
+      const now = new Date();
+      // 获取日期（例如：2023年10月27日）
+      const dateString = now.toLocaleDateString('zh-CN');
+      // 获取星期几（例如：星期五）
+      const weekdayString = now.toLocaleDateString('zh-CN', { weekday: 'long' });
+      // 获取时间（例如：14:30:55）
+      const timeString = now.toLocaleTimeString();
+      document.getElementById("current-date").textContent = dateString;
+      document.getElementById("weekday").textContent = weekdayString;
+      document.getElementById("current-time").textContent = timeString;
+      try {
+        const response = await fetch('https://baoyin2024-new-api.hf.space/lunar'); // 直接调用API
+        const data = await response.json();
+        // 确认 API 返回的字段名是否正确, 比如 data.lunarDate 只是一个占位符
+        // 如果 API 返回的是类似 { "lunarDate": "甲子年乙丑月丙寅日" } 这样的 JSON 数据，那么 data.lunarDate 就是正确的。
+        // 请检查 API 的实际返回数据来确定正确的字段名。
+        if (data && data.lunarDate) { // 检查 data 和 data.lunarDate 是否存在
+          document.getElementById("lunar-date").textContent = data.lunarDate;
+        } else {
+          document.getElementById("lunar-date").textContent = '无法解析农历数据';
+          console.error('API did not return expected lunarDate field:', data);
+        }
+      } catch (error) {
+        console.error('Error fetching lunar data:', error);
+        document.getElementById("lunar-date").textContent = '获取农历数据失败';
+      }
+    }
+    // 初始更新
+    updateDateTimeAndLunar();
+    // 每秒更新一次时间
+    setInterval(() => {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString();
+      document.getElementById("current-time").textContent = timeString;
+    }, 1000);
+    // 每天更新一次日期、星期和农历（在午夜更新）
+    function scheduleDailyUpdate() {
+      const now = new Date();
+      const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0); // 明天午夜
+      const timeUntilMidnight = midnight.getTime() - now.getTime();
+      setTimeout(() => {
+        updateDateTimeAndLunar(); // 更新
+        scheduleDailyUpdate(); // 再次安排明天的更新
+      }, timeUntilMidnight);
+    }
+    scheduleDailyUpdate(); // 安排第一次日更新
+  </script>
 </article>
 
 
